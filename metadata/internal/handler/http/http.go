@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/mkvy/movies-app/metadata/internal/controller/metadata"
-	"github.com/mkvy/movies-app/metadata/internal/repository"
 	"log"
 	"net/http"
 )
@@ -28,7 +27,7 @@ func (h *Handler) GetMetadata(w http.ResponseWriter, req *http.Request) {
 	}
 	ctx := req.Context()
 	m, err := h.ctrl.Get(ctx, id)
-	if err != nil && errors.Is(err, repository.ErrNotFound) {
+	if err != nil && errors.Is(err, metadata.ErrNotFound) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
