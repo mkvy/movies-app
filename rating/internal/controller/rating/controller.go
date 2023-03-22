@@ -46,6 +46,7 @@ func (c *Controller) PutRating(ctx context.Context, recordID model.RecordID, rec
 }
 
 // StartIngestion starts the ingestion of rating events.
+// todo remake
 func (s *Controller) StartIngestion(ctx context.Context) error {
 	ch, err := s.ingester.Ingest(ctx)
 	if err != nil {

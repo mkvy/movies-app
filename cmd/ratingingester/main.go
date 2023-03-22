@@ -12,13 +12,13 @@ import (
 func main() {
 	log.Println("Creating a kafka producer")
 
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
+	producer, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
 	if err != nil {
 		panic(err)
 	}
 	defer producer.Close()
 
-	const fileName = "ratingsdata.json"
+	const fileName = "./cmd/ratingingester/ratingsdata.json"
 	log.Println("Reading rating events from file " + fileName)
 
 	ratingEvents, err := readRatingEvents(fileName)

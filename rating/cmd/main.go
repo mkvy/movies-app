@@ -9,7 +9,7 @@ import (
 	"github.com/mkvy/movies-app/pkg/discovery/consul"
 	"github.com/mkvy/movies-app/rating/internal/controller/rating"
 	grpchandler "github.com/mkvy/movies-app/rating/internal/handler/grpc"
-	"github.com/mkvy/movies-app/rating/internal/repository/memory"
+	"github.com/mkvy/movies-app/rating/internal/repository/mysql"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -42,7 +42,10 @@ func main() {
 		}
 	}()
 	defer registry.Deregister(ctx, instanceID, serviceName)
-	repo := memory.New()
+	repo, err := mysql.New()
+	if err != nil {
+		panic(err)
+	}
 	ctrl := rating.New(repo, nil)
 	h := grpchandler.New(ctrl)
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
