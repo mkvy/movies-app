@@ -20,11 +20,16 @@ type serviceInstance struct {
 	lastActive time.Time
 }
 
+var once sync.Once
+var regMap map[string]map[string]*serviceInstance
+
 // NewRegistry Factory for new in-memory service registry
 // format map[serviceName][instanceID]*serviceInstance.
-// todo once.DO !!!!
 func NewRegistry() *Registry {
-	return &Registry{serviceAddrs: map[string]map[string]*serviceInstance{}}
+	once.Do(func() {
+		regMap = map[string]map[string]*serviceInstance{}
+	})
+	return &Registry{serviceAddrs: regMap}
 }
 
 // Register creates a service record in the registry.
@@ -35,9 +40,9 @@ func (r *Registry) Register(ctx context.Context, instanceID string, serviceName 
 	if _, ok := r.serviceAddrs[serviceName]; !ok {
 		r.serviceAddrs[serviceName] = map[string]*serviceInstance{}
 	}
-	log.Println(r.serviceAddrs)
+
 	r.serviceAddrs[serviceName][instanceID] = &serviceInstance{hostPort: hostPort, lastActive: time.Now()}
-	log.Println(r.serviceAddrs)
+
 	return nil
 }
 
@@ -70,7 +75,6 @@ func (r *Registry) ReportHealthyState(instanceID string, serviceName string) err
 func (r *Registry) ServiceAddresses(ctx context.Context, serviceName string) ([]string, error) {
 	r.RLock()
 	defer r.RUnlock()
-	log.Println(r.serviceAddrs)
 	if len(r.serviceAddrs[serviceName]) == 0 {
 		return nil, discovery.ErrNotFound
 	}

@@ -13,7 +13,7 @@ var ErrNotFound = errors.New("movie metadata not found")
 
 type ratingGateway interface {
 	GetAggregatedRating(ctx context.Context, recordID ratingmodel.RecordID, recordType ratingmodel.RecordType) (float64, error)
-	PutRating(ctx context.Context, recordID ratingmodel.RecordID, recordType ratingmodel.RecordType, rating *ratingmodel.Rating) error
+	//PutRating(ctx context.Context, recordID ratingmodel.RecordID, recordType ratingmodel.RecordType, rating *ratingmodel.Rating) error
 }
 
 type metadataGateway interface {
@@ -43,6 +43,7 @@ func (c *Controller) Get(ctx context.Context, id string) (*model.MovieDetails, e
 	rating, err := c.ratingGateway.GetAggregatedRating(ctx, ratingmodel.RecordID(id), ratingmodel.RecordTypeMovie)
 	if err != nil && !errors.Is(err, gateway.ErrNotFound) {
 		// todo
+		// Just proceed in this case, it's ok not to have ratings yet.
 	} else if err != nil {
 		return nil, err
 	} else {
