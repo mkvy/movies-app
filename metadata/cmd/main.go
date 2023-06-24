@@ -10,6 +10,8 @@ import (
 	"github.com/mkvy/movies-app/pkg/discovery"
 	"github.com/mkvy/movies-app/pkg/discovery/consul"
 	"github.com/mkvy/movies-app/pkg/tracing"
+	"github.com/uber-go/tally"
+	"github.com/uber-go/tally/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -18,6 +20,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"gopkg.in/yaml.v3"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -58,6 +61,24 @@ func main() {
 	}()
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
+
+	reporter := prometheus.NewReporter(prometheus.Options{})
+	scope, closer := tally.NewRootScope(tally.ScopeOptions{
+		Tags:           map[string]string{"service": "metadata"},
+		CachedReporter: reporter,
+	}, 10*time.Second)
+	defer closer.Close()
+	http.Handle("/metrics", reporter.HTTPHandler())
+	go func() {
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.Prometheus.MetricsPort), nil); err != nil {
+			logger.Fatal("Failed to start the metrics handler", zap.Error(err))
+		}
+	}()
+
+	counter := scope.Tagged(map[string]string{
+		"service": "metadata",
+	}).Counter("service_started")
+	counter.Inc(1)
 
 	registry, err := consul.NewRegistry("localhost:8500")
 	if err != nil {
